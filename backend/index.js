@@ -28,9 +28,12 @@ const secret = process.env.SECRET;
 app.use(bodyParser.json());
 
 app.use(cors({
-  origin: ['http://localhost:3001','http://localhost:3000'], // React frontend
-  credentials: true, // allow cookies to be sent
+//   origin: ['http://localhost:3001','http://localhost:3000'], // React frontend
+    origin: ['https://zerodha-frontend-kappa-dun.vercel.app','https://zerodha-dashboard-brown.vercel.app',],
+  credentials: true, // allow cookies to be sent   https://zerodha-dashboard-brown.vercel.app
 }));
+
+app.set("trust proxy", 1);
 
 //mogno store
 const store =MongoStore.create({
@@ -53,6 +56,8 @@ const sessionOption ={
     // store:store,
     saveUninitialized:true, 
     cookie:{
+        secure: true, // ❗️this is required in production
+        sameSite: "none",
         expires:Date.now() + 7*24*60*60*1000,
         maxAge:7*24*60*60*1000,
         httpOnly:true,
@@ -237,9 +242,9 @@ passport.deserializeUser(UserModel.deserializeUser());
 //     res.send("done...")
 // })
 
-app.get('/holdings',WrapAsync((req,res)=>{
-    res.render('holdings');
-}))
+// app.get('/holdings',WrapAsync((req,res)=>{
+//     res.render('holdings');
+// }))
 app.get('/allHoldings',WrapAsync(async(req,res)=>{
     let allholdings = await HoldingModel.find({owner:req.user._id});
     res.json(allholdings);
@@ -281,16 +286,6 @@ app.post("/newOrder",WrapAsync(async(req,res)=>{
 
     await holding.save();
     }
-    // console.log(holding); 
-    // let newHolding = HoldingModel({
-    //     name: req.body.name,
-    //     qty: req.body.qty,
-    //     avg:holding.avg,
-    //     price: req.body.price,
-    //     net: holding.net,
-    //     day: holding.day,
-    // });
-    // await newHolding.save();
     res.send("success");
 }));
 
@@ -354,6 +349,22 @@ app.post("/signUp",WrapAsync(async(req,res,next)=>{
     //     throw new ExpressError(404,error.message); //no use //try catch stops crash
     // }
 }));
+// app.post("/login", async(req, res, next) => {
+//   await passport.authenticate("local", (err, user, info) => {
+//     if (err) return next(err);
+//     if (!user) {
+//       return res.status(401).json({ msg: "Invalid username or password" });
+//     }
+//     req.login(user, (err) => {
+//       if (err) return next(err);
+//       return res.send("Login successful");
+//     });
+//   })(req, res, next);
+// });
+
+app.get("/bhai",(req,res)=>{
+    res.send("wel");
+})
 app.post("/login",passport.authenticate("local",{
     failureRedirect:"/login",
     // failureFlash:true,
@@ -371,8 +382,10 @@ app.get('/check-auth',WrapAsync((req,res)=>{
     if(req.user){
         if(req.isAuthenticated()){
         res.json({loggedIn:true});
-        console.log(req.user);
-        }else{
+        // res.send("donne");
+        // console.log(req.user);
+    }else{
+        // res.send("donne");
             res.json({loggedIn:false});
         }
     }
